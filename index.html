@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inventory System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>New Invoice</h1>
+  
+  Invoice #: <input id="invoiceNumber"><br><br>
+  Truck #: <input id="truckNumber"><br><br>
+  Part #: <input id="partNumber"><br><br>
+  Location:
+  <select id="location">
+    <option>Rig</option>
+    <option>Storage</option>
+  </select><br><br>
+  Quantity: <input id="quantity" type="number"><br><br>
+  
+  <button onclick="submitInvoice()">Submit</button>
+
+<script>
+const supabase = window.supabase.createClient(
+  'YOUR_SUPABASE_URL',
+  'YOUR_SUPABASE_ANON_KEY'
+);
+
+async function submitInvoice() {
+  const invoiceNumber = document.getElementById('invoiceNumber').value;
+  const truckNumber = document.getElementById('truckNumber').value;
+  const partNumber = document.getElementById('partNumber').value;
+  const location = document.getElementById('location').value;
+  const quantity = parseInt(document.getElementById('quantity').value);
+
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .insert({ invoice_number: invoiceNumber, truck_number: truckNumber })
+    .select()
+    .single();
+
+  await supabase.from('invoice_items').insert({
+    invoice_id: invoice.id,
+    part_number: partNumber,
+    location: location,
+    quantity: quantity
+  });
+
+  await supabase.rpc('decrement_inventory', {
+    part_input: partNumber,
+    loc_input: location,
+    qty_input: quantity
+  });
+
+  alert("Invoice Submitted");
+}
+</script>
+</body>
+</html>
